@@ -22,7 +22,7 @@ class RetrofitClient private constructor(){
     }
 
     private val retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("https://channel.scorelive.xyz/")
+        .baseUrl(Base.newBaseUrl)
         .addConverterFactory(GsonConverterFactory.create(gson))
         .client(okHttpClient())
         .build()
