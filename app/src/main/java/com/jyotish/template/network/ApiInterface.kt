@@ -72,6 +72,10 @@ interface ApiInterface {
         @Header("x-test-token") token: String,
         @Query("type") type:String
     ): TestResponse
+    suspend fun getDemoApiWorker(
+        @Header("x-test-token") token: String,
+        @Query("type") type:String
+    ): Call<TestResponse>
 }
 
 

@@ -10,6 +10,9 @@ object Base {
     @JvmStatic
     val testUrl: String
         external get
+    @JvmStatic
+    val getToken: String
+        external get
 
     init {
         System.loadLibrary("native-lib")

@@ -1,75 +1,64 @@
 package com.jyotish.template.ui_screens
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
+import androidx.fragment.app.Fragment
 import com.jyotish.template.R
+import com.jyotish.template.data_store.UserDataStore
 import com.jyotish.template.databinding.ActivityMainBinding
-import com.jyotish.template.helper.makeToast
-import com.jyotish.template.network.ResponseState
-import com.jyotish.template.ui_screens.main_screen.DemoAdapter
 import com.jyotish.template.ui_screens.main_screen.DemoViewModel
+import com.jyotish.template.ui_screens.main_screen.details.DetailsFragment
+import com.jyotish.template.ui_screens.main_screen.home.HomeFragment
 
 class MainActivity : AppCompatActivity(R.layout.activity_main) {
     private lateinit var binding: ActivityMainBinding
     private val viewModel:DemoViewModel by viewModels()
-    private val adapter: DemoAdapter by lazy { DemoAdapter() }
+    private val userDataStore by lazy { UserDataStore.getInstance() }
+    private val homeFragment = HomeFragment()
+    private val detailsFragment = DetailsFragment()
+    private var activeFragment: Fragment = homeFragment
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
-        initRecyclerView()
-        getDemoResponse()
+        // Worker Example
+
+        setUpBottomNavigation()
+        viewModel.updateData()
     }
 
-    private fun getDemoResponse() {
-        viewModel.getDemoApi("C").observe(this) {
-            when(it){
-                is ResponseState.Error ->  {
-                    it.errorMessage?.let { it1 -> Log.e("error", it1) }
-                    makeToast(it.errorMessage)
+    private fun setUpBottomNavigation() {
+        val fragmentManager = supportFragmentManager
+        val fragmentTransaction = fragmentManager.beginTransaction()
+
+        fragmentTransaction.add(binding.navHostFragment.id, homeFragment, "Home")
+        fragmentTransaction.add(binding.navHostFragment.id, detailsFragment, "Details")
+        activeFragment = detailsFragment
+        supportFragmentManager.beginTransaction().hide(activeFragment).show(homeFragment).commit()
+        activeFragment = homeFragment
+        fragmentTransaction.commit()
+
+        binding.bottomNavigationView.setOnItemSelectedListener { menuItem ->
+            when (menuItem.itemId) {
+                R.id.navigation_home -> {
+                    supportFragmentManager.beginTransaction().hide(activeFragment).show(homeFragment).commit()
+                    activeFragment = homeFragment
+                    true
                 }
-                ResponseState.Loading -> {
-                    makeToast("loading")
+                R.id.navigation_details -> {
+                    supportFragmentManager.beginTransaction().hide(activeFragment).show(detailsFragment).commit()
+                    activeFragment = detailsFragment
+
+                    true
                 }
-                is ResponseState.Success -> {
-                    adapter.submitItems(it.data.data)
-                    makeToast("success")
-                    Log.e("success data: ", it.toString())
-                }
+                else -> false
             }
         }
-    }
-
-    private fun setupObserver() {
-        viewModel.testResponse.observe(this){
-            when(it) {
-                is ResponseState.Error ->  {
-                    makeToast(it.errorMessage)
-                }
-                ResponseState.Loading -> {
-
-                }
-                is ResponseState.Success -> {
-                    makeToast("success")
-                }
-            }
+        binding.bottomNavigationView.post {
+            binding.bottomNavigationView.selectedItemId = R.id.navigation_home
         }
     }
 
-    private fun initRecyclerView() {
-
-        binding.channelRecycler.adapter = adapter
-
-        adapter.scrollToTopListener = {
-            binding.channelRecycler.smoothScrollToPosition(0)
-        }
-
-        adapter.onItemClick = { match ->
-            Log.e("onItemClick", "Click")
-            makeToast(match.titleShort)
-        }
-    }
 }
